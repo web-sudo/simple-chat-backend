@@ -1,28 +1,39 @@
 // include dependencies:
-let websocket = require("websocket").server
-let http = require("http")
+const fs = require('fs');
 const https = require('https')
+const WebSocket = require('ws');
+const WebSocketServer = WebSocket.Server;
+
+const serverConfig = {
+    key: fs.readFileSync('key.pem'),
+    cert: fs.readFileSync('cert.pem'),
+};
 
 // port number:
-let port = 5500
+const port = 5500
 
 // create server, and have listen on port 9600:
-let server = https.createServer()
+const httpsServer = https.createServer(serverConfig)
 
-server.listen(port, function() {
+httpsServer.listen(port, function() {
     console.log("Server listening on port " + port)
 });
 
-let ws_server = new websocket({
-    httpServer: server
-});
-
+const wss = new WebSocketServer({server: httpsServer});
 
 // on server request, send message:
-ws_server.on("request", function(req) {
-    let connection = req.accept(null, req.origin)
-
-    connection.on("message", function(message) {
-        ws_server.broadcast(message.utf8Data)
+wss.on("connection", function(ws) {
+    ws.on('message', function(message) {
+        // Broadcast any received message to all clients
+        console.log('received: %s', message);
+        wss.broadcast(message);
     });
 });
+
+wss.broadcast = function(data) {
+    this.clients.forEach(function(client) {
+      if(client.readyState === WebSocket.OPEN) {
+        client.send(data);
+      }
+    });
+};
