@@ -1,12 +1,13 @@
 // include dependencies:
 let websocket = require("websocket").server
 let http = require("http")
+const https = require('https')
 
 // port number:
 let port = 5500
 
 // create server, and have listen on port 9600:
-let server = http.createServer()
+let server = https.createServer()
 
 server.listen(port, function() {
     console.log("Server listening on port " + port)
